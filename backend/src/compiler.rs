@@ -11,8 +11,8 @@ use uuid::Uuid;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CompilerResult {
     pub code: i32,
-    pub output: String,
-    pub error: String,
+    pub stdout: String,
+    pub stderr: String,
 }
 
 pub fn compile(code: &str, execute: bool) -> Result<CompilerResult> {
@@ -47,7 +47,7 @@ pub fn compile(code: &str, execute: bool) -> Result<CompilerResult> {
     remove_file(temp_file_path)?;
     Ok(CompilerResult {
         code: output.status.code().unwrap_or(0),
-        output: String::from_utf8(output.stdout).unwrap(),
-        error: String::from_utf8(output.stderr).unwrap(),
+        stdout: String::from_utf8(output.stdout).unwrap(),
+        stderr: String::from_utf8(output.stderr).unwrap(),
     })
 }

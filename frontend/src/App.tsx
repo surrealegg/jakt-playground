@@ -6,8 +6,8 @@ import { classNames } from "./Utils";
 
 interface CompilerResponse {
   code: number;
-  output: string;
-  error: string;
+  stdout: string;
+  stderr: string;
 }
 
 const DEFAULT_CODE = `function main() {
@@ -34,8 +34,8 @@ export function App() {
       }
     );
     const json: CompilerResponse = await response.json();
-    setStdout(json.output);
-    setStderr(json.error);
+    setStdout(json.stdout);
+    setStderr(json.stderr);
     setCode(json.code);
     setIsLoading(false);
   }
