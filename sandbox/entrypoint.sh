@@ -7,7 +7,7 @@ run() {
     exit_code=$?
     if [ $exit_code -ne 0 ]; then
         if [ $exit_code -eq 124 ]; then
-            >&2 echo "Timeout while running '$@'"
+            >&2 echo "'$@' took way too long to run."
         fi
         exit $exit_code
     fi
