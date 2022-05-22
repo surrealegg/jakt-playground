@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CompilerResult {
-    pub success: bool,
+    pub code: i32,
     pub output: String,
     pub error: String,
 }
@@ -46,7 +46,7 @@ pub fn compile(code: &str, execute: bool) -> Result<CompilerResult> {
     let output = result.wait_with_output()?;
     remove_file(temp_file_path)?;
     Ok(CompilerResult {
-        success: output.status.success(),
+        code: output.status.code().unwrap_or(0),
         output: String::from_utf8(output.stdout).unwrap(),
         error: String::from_utf8(output.stderr).unwrap(),
     })
