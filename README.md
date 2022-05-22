@@ -1,12 +1,19 @@
 # jakt-playground
 
-`sandbox` - A Docker image that is being used for running untrusted user code
-`backend` - A server to handle http requests
-`frontend` - UI of the playground
+* `sandbox` - A Docker image that is being used for running untrusted user code
+* `backend` - A server to handle http requests
+* `frontend` - UI of the playground
 
-TODO: Better documentation needed.
+## NOTE 
 
-## Building an Image
+This project is still in heavy development, missing features and bugs are to be expected!
+
+## TODO
+
+* [ ] Better documentation
+* [ ] Refactoring to improve code quality.
+
+## Building the Image
 
 ```sh
 sh ./sandbox/setup.sh
