@@ -18,6 +18,8 @@ const DEFAULT_CODE = `function main() {
 export function App() {
   const [input, setInput] = useState(DEFAULT_CODE);
   const [code, setCode] = useState(0);
+  const [status, setStatus] = useState(0);
+  const [statusText, setStatusText] = useState("");
   const [stdout, setStdout] = useState("");
   const [stderr, setStderr] = useState("");
   const [ran, setRan] = useState(false);
@@ -33,6 +35,14 @@ export function App() {
         method: "POST",
       }
     );
+
+    setStatus(response.status);
+    if (response.status !== 200) {
+      setStatusText(response.statusText);
+      setIsLoading(false);
+      return;
+    }
+
     const json: CompilerResponse = await response.json();
     setStdout(json.stdout);
     setStderr(json.stderr);
@@ -82,11 +92,21 @@ export function App() {
           <pre className="overflow-auto">
             {!isLoading && (
               <div className="space-y-4">
-                <p className="font-bold ">Program Exited with code: {code}</p>
-                <p className="font-bold ">Stdout:</p>
-                <Ansi className="break-words">{stdout}</Ansi>
-                <p className="font-bold ">Stderr:</p>
-                <Ansi className="break-words">{stderr}</Ansi>
+                {status !== 200 ? (
+                  <p className="font-bold text-red-600">
+                    {status}: {statusText}
+                  </p>
+                ) : (
+                  <>
+                    <p className="font-bold">
+                      Program Exited with code: {code}
+                    </p>
+                    <p className="font-bold">Stdout:</p>
+                    <Ansi className="break-words">{stdout}</Ansi>
+                    <p className="font-bold">Stderr:</p>
+                    <Ansi className="break-words">{stderr}</Ansi>
+                  </>
+                )}
               </div>
             )}
           </pre>
