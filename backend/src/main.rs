@@ -1,3 +1,6 @@
+use std::{env, fs, process::Stdio};
+
+use async_std::process::Command;
 use compiler::compile;
 use tide::{
     http::headers::HeaderValue,
@@ -33,8 +36,44 @@ async fn compile_or_execute(mut req: Request<()>) -> tide::Result {
     }
 }
 
+fn docker_exists() -> bool {
+    if let Ok(paths) = env::var("PATH") {
+        for path in paths.split(":") {
+            if fs::metadata(format!("{}/docker", path)).is_ok() {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+async fn has_docker_image() -> bool {
+    if let Ok(child) = Command::new("docker")
+        .arg("images")
+        .stdout(Stdio::piped())
+        .spawn()
+    {
+        if let Ok(output) = child.output().await {
+            if let Ok(string) = String::from_utf8(output.stdout) {
+                return string.contains("jakt_sandbox");
+            }
+        }
+    }
+    false
+}
+
 #[async_std::main]
 async fn main() -> tide::Result<()> {
+    if !docker_exists() {
+        eprintln!("Docker not found! Please install it: https://docs.docker.com/get-docker/");
+        return Ok(());
+    }
+
+    if !has_docker_image().await {
+        eprintln!("Docker image jakt_sandbox is missing. Have you ran 'sh ./sandbox/setup.sh'?");
+        return Ok(());
+    }
+
     let mut app = tide::new();
     // FIXME: Let's not allow * origin
     app.with(
