@@ -6,6 +6,19 @@ html, body, #root {
     @apply h-full;
 }
 
-.jakt-btn {
-    @apply flex flex-row items-center bg-orange-700  active:bg-orange-800 text-white px-4 py-2 rounded-sm;
+.jaktBtn {
+    @apply flex flex-row items-center bg-orange-700;
+    @apply active:bg-orange-800 text-white px-4 py-2 rounded-sm;
 }
+
+.jaktBtn.loading {
+    @apply opacity-50 cursor-not-allowed;
+}
+
+pre {
+    white-space: pre-wrap;       /* css-3 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+   }
