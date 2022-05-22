@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+    @apply h-full;
+}
+
+.jakt-btn {
+    @apply flex flex-row items-center bg-orange-700  active:bg-orange-800 text-white px-4 py-2 rounded-sm;
+}
