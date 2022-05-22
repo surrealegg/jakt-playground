@@ -1,22 +1,21 @@
 #!/bin/sh
 
 run() {
-    echo $@
     $@
     if [ $? -ne 0 ]; then
         exit 1
     fi
 }
 
-announce() {
-    printf "$1\n\n"
-}
+CODEGEN=${CODEGEN:-0};
 
-announce Compiling:
 run jakt input.jakt
-run clang++ -std=c++20 -I/usr/local/include/runtime -Wno-user-defined-literals /playground/output.cpp
-printf "\n"
 
-announce Executing:
+if [ $CODEGEN -eq 1 ]; then
+    cat output.cpp
+    exit 0
+fi
+
+run clang++ -std=c++20 -I/usr/local/include/runtime -Wno-user-defined-literals /playground/output.cpp
 /playground/a.out
 rm -f /playground/a.out /playground/output.cpp
