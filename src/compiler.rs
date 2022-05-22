@@ -5,8 +5,10 @@ use std::{
     process::{Command, Stdio},
 };
 
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CompilerResult {
     pub success: bool,
     pub output: String,
@@ -25,8 +27,11 @@ pub fn compile(code: &str, execute: bool) -> Result<CompilerResult> {
 
     let result = Command::new("docker")
         .arg("run")
+        .arg("--rm")
         .arg("--net=none")
-        .arg("--stop-timeout=10")
+        .arg("--memory=100m")
+        .arg("--memory-swap=100m")
+        .arg("--cpus=0.8")
         .arg(format!("--env=CODEGEN={}", if execute { 0 } else { 1 }))
         .arg(format!(
             "--volume={}:/playground/input.jakt",
