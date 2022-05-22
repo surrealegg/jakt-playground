@@ -8,6 +8,7 @@ use tide::{
     security::{CorsMiddleware, Origin},
     Body, Request, Response,
 };
+use tide_governor::GovernorMiddleware;
 
 mod compiler;
 
@@ -32,7 +33,7 @@ async fn compile_or_execute(mut req: Request<()>) -> tide::Result {
             response.set_body(Body::from_json(&result)?);
             Ok(response)
         }
-        Err(_) => todo!(),
+        Err(_) => Ok(Response::new(500)),
     }
 }
 
@@ -82,7 +83,9 @@ async fn main() -> tide::Result<()> {
             .allow_origin(Origin::from("*"))
             .allow_credentials(false),
     );
-    app.at("/compile").post(compile_or_execute);
+    app.at("/compile")
+        .with(GovernorMiddleware::per_minute(4)?)
+        .post(compile_or_execute);
     app.listen("127.0.0.1:8080").await?;
     Ok(())
 }
