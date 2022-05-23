@@ -13,13 +13,13 @@ run() {
     fi
 }
 
-run jakt input.jakt
+run jakt input.jakt -o .
 
 if [ $CODEGEN -eq 1 ]; then
-    cat output.cpp
+    cat input.cpp
     exit 0
 fi
 
-run clang++ -std=c++20 -I/usr/local/include/runtime -Wno-user-defined-literals -fcolor-diagnostics /playground/output.cpp
+run clang++ -std=c++20 -I/usr/local/include/runtime -Wno-user-defined-literals -fcolor-diagnostics /playground/input.cpp
 run /playground/a.out
-rm -f /playground/a.out /playground/output.cpp
+rm -f /playground/a.out /playground/input.cpp
