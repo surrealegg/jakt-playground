@@ -3,6 +3,7 @@ import Ansi from "ansi-to-react";
 import { useState } from "react";
 import { FiSettings, FiPlay } from "react-icons/fi";
 import { classNames } from "./Utils";
+import { KeyCode, editor } from "monaco-editor";
 
 interface CompilerResponse {
   code: number;
@@ -50,6 +51,18 @@ export function App() {
     setIsLoading(false);
   }
 
+  function onMount(editor: editor.IStandaloneCodeEditor) {
+    editor.addCommand(KeyCode.F5, () => {
+      setInput(editor.getValue());
+      run(true);
+    });
+
+    editor.addCommand(KeyCode.F6, () => {
+      setInput(editor.getValue());
+      run(false);
+    });
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex flex-row space-x-4 p-4 box-border">
@@ -62,6 +75,7 @@ export function App() {
           })}
         >
           <FiPlay className="mr-2" /> Run
+          <span className="jaktKeybind">(F5)</span>
         </button>
         <button
           onClick={() => run(false)}
@@ -72,6 +86,7 @@ export function App() {
           })}
         >
           <FiSettings className="mr-2" /> Compile
+          <span className="jaktKeybind">(F6)</span>
         </button>
       </div>
       <div
@@ -79,6 +94,7 @@ export function App() {
       >
         <div>
           <Editor
+            onMount={onMount}
             onChange={(value) => {
               if (value) setInput(value);
             }}
