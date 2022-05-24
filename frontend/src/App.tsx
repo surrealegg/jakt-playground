@@ -29,25 +29,32 @@ export function App() {
   async function run(execute: boolean) {
     setRan(true);
     setIsLoading(true);
-    const response = await fetch(
-      `${import.meta.env.VITE_SERVER_URL}/compile?execute=${execute}`,
-      {
-        body: input,
-        method: "POST",
-      }
-    );
 
-    setStatus(response.status);
-    if (response.status !== 200) {
-      setStatusText(response.statusText);
-      setIsLoading(false);
-      return;
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVER_URL}/compile?execute=${execute}`,
+        {
+          body: input,
+          method: "POST",
+        }
+      );
+
+      setStatus(response.status);
+      if (response.status !== 200) {
+        setStatusText(response.statusText);
+        setIsLoading(false);
+        return;
+      }
+
+      const json: CompilerResponse = await response.json();
+      setStdout(json.stdout);
+      setStderr(json.stderr);
+      setCode(json.code);
+    } catch (_) {
+      setStatus(503);
+      setStatusText("Service Unavailable");
     }
 
-    const json: CompilerResponse = await response.json();
-    setStdout(json.stdout);
-    setStderr(json.stderr);
-    setCode(json.code);
     setIsLoading(false);
   }
 
