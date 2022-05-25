@@ -4,6 +4,7 @@ use async_std::process::Command;
 use compiler::compile;
 use tide::{
     http::headers::HeaderValue,
+    log::{self, error, warn, LogMiddleware},
     prelude::*,
     security::{CorsMiddleware, Origin},
     Body, Request, Response,
@@ -15,7 +16,7 @@ mod compiler;
 macro_rules! env_get {
     ($name: expr, $default: expr) => {
         std::env::var($name).unwrap_or_else(|_| {
-            eprintln!("Warning: {} is not set, using default {}", $name, $default);
+            warn!("Warning: {} is not set, using default {}", $name, $default);
             String::from($default)
         })
     };
@@ -42,7 +43,10 @@ async fn compile_or_execute(mut req: Request<()>) -> tide::Result {
             response.set_body(Body::from_json(&result)?);
             Ok(response)
         }
-        Err(_) => Ok(Response::new(500)),
+        Err(err) => {
+            error!("{:#?}", err);
+            Ok(Response::new(500))
+        }
     }
 }
 
@@ -74,33 +78,41 @@ async fn has_docker_image() -> bool {
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
+    log::start();
+
     if !program_exists("jakt") {
-        eprintln!("Jakt not found. Have you ran 'cargo install --path . inside jakt repository?'");
+        error!("Jakt not found. Have you ran 'cargo install --path . inside jakt repository?'");
         return Ok(());
     }
 
     if !program_exists("docker") {
-        eprintln!("Docker not found. Please install it: https://docs.docker.com/get-docker/");
+        error!("Docker not found. Please install it: https://docs.docker.com/get-docker/");
         return Ok(());
     }
 
     if !has_docker_image().await {
-        eprintln!("Docker image jakt_sandbox is missing. Have you ran 'sh ./sandbox/setup.sh'?");
+        error!("Docker image jakt_sandbox is missing. Have you ran 'sh ./sandbox/setup.sh'?");
+        return Ok(());
+    }
+
+    if std::env::var("JAKT_HOME").is_err() {
+        error!("JAKT_HOME is not set");
         return Ok(());
     }
 
     let mut app = tide::new();
-    let host = format!("127.0.0.1:{}", env_get!("PORT", "8080"));
+
     app.with(
         CorsMiddleware::new()
             .allow_methods("POST".parse::<HeaderValue>().unwrap())
             .allow_origin(Origin::from(env_get!("ALLOW_ORIGIN", "*")))
             .allow_credentials(false),
     );
+    app.with(LogMiddleware::new());
     app.at("/compile")
         .with(GovernorMiddleware::per_minute(4)?)
         .post(compile_or_execute);
-    println!("Listening to {}", host);
-    app.listen(host).await?;
+    app.listen(format!("127.0.0.1:{}", env_get!("PORT", "8080")))
+        .await?;
     Ok(())
 }
