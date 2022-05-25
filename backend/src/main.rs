@@ -46,10 +46,10 @@ async fn compile_or_execute(mut req: Request<()>) -> tide::Result {
     }
 }
 
-fn docker_exists() -> bool {
+fn program_exists(program: &str) -> bool {
     if let Ok(paths) = env::var("PATH") {
         for path in paths.split(":") {
-            if fs::metadata(format!("{}/docker", path)).is_ok() {
+            if fs::metadata(format!("{}/{}", path, program)).is_ok() {
                 return true;
             }
         }
@@ -74,8 +74,13 @@ async fn has_docker_image() -> bool {
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
-    if !docker_exists() {
-        eprintln!("Docker not found! Please install it: https://docs.docker.com/get-docker/");
+    if !program_exists("jakt") {
+        eprintln!("Jakt not found. Have you ran 'cargo install --path . inside jakt repository?'");
+        return Ok(());
+    }
+
+    if !program_exists("docker") {
+        eprintln!("Docker not found. Please install it: https://docs.docker.com/get-docker/");
         return Ok(());
     }
 
