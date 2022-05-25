@@ -12,6 +12,15 @@ use tide_governor::GovernorMiddleware;
 
 mod compiler;
 
+macro_rules! env_get {
+    ($name: expr, $default: expr) => {
+        std::env::var($name).unwrap_or_else(|_| {
+            eprintln!("Warning: {} is not set, using default {}", $name, $default);
+            String::from($default)
+        })
+    };
+}
+
 #[derive(Deserialize)]
 #[serde(default)]
 struct CompileRequest {
@@ -76,16 +85,17 @@ async fn main() -> tide::Result<()> {
     }
 
     let mut app = tide::new();
-    // FIXME: Let's not allow * origin
+    let host = format!("127.0.0.1:{}", env_get!("PORT", "8080"));
     app.with(
         CorsMiddleware::new()
             .allow_methods("POST".parse::<HeaderValue>().unwrap())
-            .allow_origin(Origin::from("*"))
+            .allow_origin(Origin::from(env_get!("ALLOW_ORIGIN", "*")))
             .allow_credentials(false),
     );
     app.at("/compile")
         .with(GovernorMiddleware::per_minute(4)?)
         .post(compile_or_execute);
-    app.listen("127.0.0.1:8080").await?;
+    println!("Listening to {}", host);
+    app.listen(host).await?;
     Ok(())
 }
