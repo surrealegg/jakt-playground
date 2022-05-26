@@ -76,6 +76,12 @@ async fn main() -> tide::Result<()> {
             .allow_credentials(false),
     );
     app.with(LogMiddleware::new());
+
+    // If needed serve static page at main directory
+    if let Ok(static_page) = std::env::var("STATIC_PAGE") {
+        app.at("/").serve_dir(static_page)?;
+    }
+
     app.at("/compile")
         .with(GovernorMiddleware::per_minute(4)?)
         .post(compile_or_execute);
