@@ -25,7 +25,11 @@ impl Default for CompileRequest {
 }
 
 async fn compile_or_execute(mut req: Request<()>) -> tide::Result {
-    let code = req.body_string().await?;
+    let code = String::from(req.body_string().await?.trim());
+    if code.len() == 0 {
+        return Ok(Response::new(400));
+    }
+
     let params: CompileRequest = req.query()?;
     match compile(&code, params.execute) {
         Ok(result) => {
