@@ -43,9 +43,10 @@ pub(crate) fn compile(code: &str, execute: bool) -> Result<CompilerResult, Progr
         Command::new("timeout")
             .arg("5")
             .arg("jakt")
+            .arg("-S")
+            .arg(&filename_jakt)
             .arg("-o")
-            .arg(&tmp_path)
-            .arg(&filename_jakt),
+            .arg(&tmp_path),
     )?;
     if result.code != 0 {
         return Ok(result);
