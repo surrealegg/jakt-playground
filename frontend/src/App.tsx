@@ -1,9 +1,10 @@
 import Editor from "@monaco-editor/react";
 import Ansi from "ansi-to-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FiSettings, FiPlay } from "react-icons/fi";
-import { classNames } from "./Utils";
+import { classNames, getGist } from "./Utils";
 import { KeyCode, editor } from "monaco-editor";
+import { useSearchParams } from "react-router-dom";
 
 interface CompilerResponse {
   code: number;
@@ -12,12 +13,12 @@ interface CompilerResponse {
 }
 
 const DEFAULT_CODE = `function main() {
-  println(":^)");
+  println("Hello Friends! :^)");
 }
 `;
 
 export function App() {
-  const [input, setInput] = useState(DEFAULT_CODE);
+  const [searchParams] = useSearchParams();
   const [code, setCode] = useState(0);
   const [status, setStatus] = useState(0);
   const [statusText, setStatusText] = useState("");
@@ -25,6 +26,7 @@ export function App() {
   const [stderr, setStderr] = useState("");
   const [ran, setRan] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const editorRef = useRef<editor.IStandaloneCodeEditor>(null);
 
   async function run(execute: boolean) {
     setRan(true);
@@ -34,7 +36,7 @@ export function App() {
       const response = await fetch(
         `${import.meta.env.VITE_SERVER_URL}/compile?execute=${execute}`,
         {
-          body: input,
+          body: editorRef.current?.getValue(),
           method: "POST",
         }
       );
@@ -60,18 +62,24 @@ export function App() {
 
   function onMount(editor: editor.IStandaloneCodeEditor) {
     editor.addCommand(KeyCode.F5, () => {
-      setInput(editor.getValue());
       run(true);
     });
 
     editor.addCommand(KeyCode.F6, () => {
-      setInput(editor.getValue());
       run(false);
     });
+
+    const id = searchParams.get("gist");
+    if (id)
+      getGist(id, (content) => editor.setValue(content)).catch(console.error);
+    else editor.setValue(DEFAULT_CODE);
+
+    // @ts-ignore
+    editorRef.current = editor;
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       <div className="flex flex-row space-x-4 p-4 box-border">
         <button
           onClick={() => run(true)}
@@ -97,42 +105,40 @@ export function App() {
         </button>
       </div>
       <div
-        className={`grid ${ran ? "grid-cols-2" : "grid-cols-1"} h-full gap-2`}
+        className={`grid ${
+          ran ? "grid-cols-2" : "grid-cols-1"
+        } w-full h-full gap-2`}
       >
-        <div>
-          <Editor
-            onMount={onMount}
-            onChange={(value) => {
-              if (value) setInput(value);
-            }}
-            className="h-full"
-            theme="vs"
-            defaultLanguage="jakt"
-            defaultValue={input}
-          />
-        </div>
+        <Editor
+          defaultValue="// Loading..."
+          onMount={onMount}
+          theme="vs"
+          defaultLanguage="jakt"
+        />
         {ran && (
-          <pre className="overflow-auto">
-            {!isLoading && (
-              <div className="space-y-4">
-                {status !== 200 ? (
+          <div className="relative">
+            <pre className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-0 w-full h-full">
+              {!isLoading &&
+                (status !== 200 ? (
                   <p className="font-bold text-red-600">
                     {status}: {statusText}
                   </p>
                 ) : (
                   <>
-                    <p className="font-bold">
-                      Program Exited with code: {code}
+                    <p>
+                      <span className="font-bold">
+                        Program Exited with code:
+                      </span>{" "}
+                      {code}
                     </p>
                     <p className="font-bold">Stdout:</p>
                     <Ansi className="break-words">{stdout}</Ansi>
                     <p className="font-bold">Stderr:</p>
                     <Ansi className="break-words">{stderr}</Ansi>
                   </>
-                )}
-              </div>
-            )}
-          </pre>
+                ))}
+            </pre>
+          </div>
         )}
       </div>
     </div>

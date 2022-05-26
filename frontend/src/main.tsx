@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { App } from "./App";
 import { loader } from "@monaco-editor/react";
 import "./index.css";
+import { BrowserRouter } from "react-router-dom";
 
 // TODO: It is incomplete
 loader.init().then((monaco) => {
@@ -74,6 +75,8 @@ loader.init().then((monaco) => {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>
 );
