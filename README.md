@@ -16,7 +16,7 @@ This project is still in heavy development, missing features and bugs are to be 
 ## Building the Image
 
 ```sh
-sh ./sandbox/setup.sh
+bash ./sandbox/setup.sh
 ```
 
 ## Starting the Server

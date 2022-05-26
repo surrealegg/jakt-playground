@@ -17,7 +17,6 @@ pub(crate) struct CompilerResult {
 
 #[derive(Debug)]
 pub(crate) enum ProgramError {
-    EnvMissing,
     FileCreate,
     FileRead,
     FileWrite,
@@ -32,7 +31,6 @@ pub(crate) fn compile(code: &str, execute: bool) -> Result<CompilerResult, Progr
     let filename = format!("{}/jakt-{}", tmp_path, Uuid::new_v4());
     let filename_jakt = format!("{}.jakt", filename);
     let filename_cpp = format!("{}.cpp", filename);
-    let jakt_home = wrap_err!(std::env::var("JAKT_HOME"), ProgramError::EnvMissing)?;
 
     // Write jakt file to a temp directory
     let mut tmp_file = wrap_err!(File::create(&filename_jakt), ProgramError::FileCreate)?;
@@ -80,10 +78,6 @@ pub(crate) fn compile(code: &str, execute: bool) -> Result<CompilerResult, Progr
             .arg(format!(
                 "--volume={}:/playground/input.cpp:ro",
                 filename_cpp
-            ))
-            .arg(format!(
-                "--volume={}/runtime:/usr/local/include/runtime:ro",
-                jakt_home
             ))
             .arg("jakt_sandbox"),
     );

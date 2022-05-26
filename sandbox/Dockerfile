@@ -4,6 +4,9 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y clang libc-dev libc++-dev \
     && rm -rf /var/lib/apt/lists/*
 ADD ./entrypoint.sh /entrypoint.sh
+COPY ./runtime/ /usr/local/include/runtime/
+RUN cd /usr/local/include/runtime/ \
+    && clang++ -x c++-header -I. --std=c++20 lib.h
 RUN mkdir -p /playground \
     && chown -R nobody:nogroup /playground \
     && chmod +x /entrypoint.sh
