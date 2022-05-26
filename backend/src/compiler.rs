@@ -39,7 +39,7 @@ pub(crate) fn compile(code: &str, execute: bool) -> Result<CompilerResult, Progr
     wrap_err!(tmp_file.write(code.as_bytes()), ProgramError::FileWrite)?;
 
     // Transpile jakt code
-    execute_command(
+    let result = execute_command(
         Command::new("timeout")
             .arg("5")
             .arg("jakt")
@@ -47,6 +47,9 @@ pub(crate) fn compile(code: &str, execute: bool) -> Result<CompilerResult, Progr
             .arg(&tmp_path)
             .arg(&filename_jakt),
     )?;
+    if result.code != 0 {
+        return Ok(result);
+    }
 
     // If only thing needed is showing the c++ code, just output the result
     if !execute {
