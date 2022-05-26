@@ -1,6 +1,3 @@
-use std::{env, fs, process::Stdio};
-
-use async_std::process::Command;
 use compiler::compile;
 use tide::{
     http::headers::HeaderValue,
@@ -10,17 +7,10 @@ use tide::{
     Body, Request, Response,
 };
 use tide_governor::GovernorMiddleware;
+use utils::{env_get, has_docker_image, program_exists};
 
 mod compiler;
-
-macro_rules! env_get {
-    ($name: expr, $default: expr) => {
-        std::env::var($name).unwrap_or_else(|_| {
-            warn!("Warning: {} is not set, using default {}", $name, $default);
-            String::from($default)
-        })
-    };
-}
+mod utils;
 
 #[derive(Deserialize)]
 #[serde(default)]
@@ -50,32 +40,6 @@ async fn compile_or_execute(mut req: Request<()>) -> tide::Result {
     }
 }
 
-fn program_exists(program: &str) -> bool {
-    if let Ok(paths) = env::var("PATH") {
-        for path in paths.split(":") {
-            if fs::metadata(format!("{}/{}", path, program)).is_ok() {
-                return true;
-            }
-        }
-    }
-    false
-}
-
-async fn has_docker_image() -> bool {
-    if let Ok(child) = Command::new("docker")
-        .arg("images")
-        .stdout(Stdio::piped())
-        .spawn()
-    {
-        if let Ok(output) = child.output().await {
-            if let Ok(string) = String::from_utf8(output.stdout) {
-                return string.contains("jakt_sandbox");
-            }
-        }
-    }
-    false
-}
-
 #[async_std::main]
 async fn main() -> tide::Result<()> {
     log::start();
@@ -90,7 +54,7 @@ async fn main() -> tide::Result<()> {
         return Ok(());
     }
 
-    if !has_docker_image().await {
+    if !has_docker_image() {
         error!("Docker image jakt_sandbox is missing. Have you ran 'sh ./sandbox/setup.sh'?");
         return Ok(());
     }
@@ -101,7 +65,6 @@ async fn main() -> tide::Result<()> {
     }
 
     let mut app = tide::new();
-
     app.with(
         CorsMiddleware::new()
             .allow_methods("POST".parse::<HeaderValue>().unwrap())

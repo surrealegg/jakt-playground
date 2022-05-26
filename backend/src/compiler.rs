@@ -1,22 +1,23 @@
+use crate::utils::{execute_command, wrap_err};
+use serde::{Deserialize, Serialize};
 use std::{
     env::temp_dir,
     fs::{remove_file, File},
     io::Write,
-    process::{Command, Stdio},
+    process::Command,
 };
-
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct CompilerResult {
+pub(crate) struct CompilerResult {
     pub code: i32,
     pub stdout: String,
     pub stderr: String,
 }
 
 #[derive(Debug)]
-pub enum CompileError {
+pub(crate) enum ProgramError {
+    EnvMissing,
     FileCreate,
     FileRead,
     FileWrite,
@@ -25,42 +26,17 @@ pub enum CompileError {
     UTF8Conversion,
 }
 
-macro_rules! wrap_err {
-    ($value: expr, $err: expr) => {
-        $value.or_else(|_| Err($err))
-    };
-}
-
-fn execute_command(command: &mut Command) -> Result<CompilerResult, CompileError> {
-    let child = command
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .or_else(|_| Err(CompileError::ChildSpawn))?;
-    let output = wrap_err!(child.wait_with_output(), CompileError::ChildWaitWithOutput)?;
-    Ok(CompilerResult {
-        code: output.status.code().unwrap_or(0),
-        stdout: wrap_err!(
-            String::from_utf8(output.stdout),
-            CompileError::UTF8Conversion
-        )?,
-        stderr: wrap_err!(
-            String::from_utf8(output.stderr),
-            CompileError::UTF8Conversion
-        )?,
-    })
-}
-
-pub fn compile(code: &str, execute: bool) -> Result<CompilerResult, CompileError> {
+pub(crate) fn compile(code: &str, execute: bool) -> Result<CompilerResult, ProgramError> {
+    // Get the paths for jakt file and cpp output
     let tmp_path = String::from(temp_dir().to_str().unwrap_or_else(|| "/tmp"));
     let filename = format!("{}/jakt-{}", tmp_path, Uuid::new_v4());
     let filename_jakt = format!("{}.jakt", filename);
     let filename_cpp = format!("{}.cpp", filename);
-    let jakt_home = std::env::var("JAKT_HOME").unwrap();
+    let jakt_home = wrap_err!(std::env::var("JAKT_HOME"), ProgramError::EnvMissing)?;
 
-    let mut tmp_file = wrap_err!(File::create(&filename_jakt), CompileError::FileCreate)?;
-    wrap_err!(tmp_file.write(code.as_bytes()), CompileError::FileWrite)?;
+    // Write jakt file to a temp directory
+    let mut tmp_file = wrap_err!(File::create(&filename_jakt), ProgramError::FileCreate)?;
+    wrap_err!(tmp_file.write(code.as_bytes()), ProgramError::FileWrite)?;
 
     // Transpile jakt code
     execute_command(
@@ -76,9 +52,11 @@ pub fn compile(code: &str, execute: bool) -> Result<CompilerResult, CompileError
     if !execute {
         let result = wrap_err!(
             std::fs::read_to_string(&filename_cpp),
-            CompileError::FileRead
+            ProgramError::FileRead
         )?;
-        let _ = remove_file(&filename_cpp);
+        // It's fine if the removing file failed
+        let _ = remove_file(filename_cpp);
+        let _ = remove_file(filename_jakt);
         return Ok(CompilerResult {
             code: 0,
             stdout: result,
@@ -106,6 +84,7 @@ pub fn compile(code: &str, execute: bool) -> Result<CompilerResult, CompileError
             .arg("jakt_sandbox"),
     );
 
+    // It's fine if the removing file failed
     let _ = remove_file(filename_cpp);
     let _ = remove_file(filename_jakt);
     return result;
