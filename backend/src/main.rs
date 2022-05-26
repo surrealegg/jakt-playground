@@ -24,10 +24,15 @@ impl Default for CompileRequest {
     }
 }
 
+const MAX_SNIPPET_SIZE: usize = 64 * 1024;
+
 async fn compile_or_execute(mut req: Request<()>) -> tide::Result {
     let code = String::from(req.body_string().await?.trim());
     if code.len() == 0 {
         return Ok(Response::new(400));
+    }
+    if code.len() > MAX_SNIPPET_SIZE {
+        return Ok(Response::new(413));
     }
 
     let params: CompileRequest = req.query()?;
