@@ -13,7 +13,7 @@ interface CompilerResponse {
 }
 
 const DEFAULT_CODE = `function main() {
-  println("Hello Friends! :^)");
+    println("Hello Friends! :^)")
 }
 `;
 
