@@ -47,6 +47,7 @@ pub(crate) fn compile(code: &str, execute: bool) -> Result<CompilerResult, Progr
             .arg(&tmp_path),
     )?;
     if result.code != 0 {
+        let _ = remove_file(filename_jakt);
         return Ok(result);
     }
 
