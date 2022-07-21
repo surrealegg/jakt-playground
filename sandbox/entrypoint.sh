@@ -1,7 +1,5 @@
 #!/bin/bash
 
-CODEGEN=${CODEGEN:-0};
-
 run() {
     timeout 5 $@
     exit_code=$?
