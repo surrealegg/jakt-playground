@@ -41,15 +41,19 @@ pub(crate) fn compile(code: &str, execute: bool) -> Result<CompilerResult, Progr
         Command::new("timeout")
             .arg("5")
             .arg("jakt")
-            .arg("-S")
-            .arg(&filename_jakt)
-            .arg("-o")
-            .arg(&tmp_path),
+            .arg(&filename_jakt),
     )?;
     if result.code != 0 {
         let _ = remove_file(filename_jakt);
         return Ok(result);
     }
+
+    // Write cpp file
+    let mut tmp_file = wrap_err!(File::create(&filename_cpp), ProgramError::FileCreate)?;
+    wrap_err!(
+        tmp_file.write(result.stdout.as_bytes()),
+        ProgramError::FileWrite
+    )?;
 
     // If only thing needed is showing the c++ code, just output the result
     if !execute {
