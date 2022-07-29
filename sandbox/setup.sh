@@ -5,6 +5,11 @@ if [[ ! -v JAKT_HOME ]]; then
     exit 1
 fi
 
-cp -R $JAKT_HOME/runtime ./sandbox
-docker build -t 'jakt_sandbox' ./sandbox
+if [[ ! -v JAKT_PLAYGROUND_HOME ]]; then
+    echo "JAKT_PLAYGROUND_HOME is not set"
+    exit 1
+fi
+
+cp -R $JAKT_HOME/runtime $JAKT_PLAYGROUND_HOME/sandbox/runtime
+docker build -t 'jakt_sandbox' $JAKT_PLAYGROUND_HOME/sandbox
 docker images
