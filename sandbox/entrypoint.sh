@@ -14,6 +14,6 @@ run() {
 run clang++ -std=c++20 -I/usr/local/include/runtime \
     -include-pch /usr/local/include/runtime/lib.h.gch \
     -Wno-user-defined-literals -no-pie -O0 \
-    -fcolor-diagnostics /playground/input.cpp
+    -fno-exceptions -fcolor-diagnostics /playground/input.cpp
 run /playground/a.out
 rm -f /playground/a.out
